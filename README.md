@@ -5,7 +5,7 @@
 
 *Secure Integrated System v. A*
 
-The incomplete CPU that was discovered on one of neo-nazis computers in the faculty's basement.
+The incomplete CPU that was discovered on one of the computers in the faculty's basement.
 
 ## Getting the source code
 
