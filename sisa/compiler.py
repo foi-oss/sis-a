@@ -54,6 +54,11 @@ def compile(f, fout):
   with open(f, 'r') as source:
     parsed_source = map(parse_line, enumerate(source.readlines()))
 
+  for label in COMPILER_LABELS:
+    info = COMPILER_LABELS[label]
+    if info['end'] == -1:
+      error(info['start'], "label '%s' is missing a matching .end call" % label)
+
   if len(COMPILER_ERRORS) != 0:
     return (False, COMPILER_ERRORS)
 
@@ -121,7 +126,7 @@ def parse_line((n, line)):
   bas = instructions.INSTRUCTIONS[opcode].__bas__
   parsed_args = [parse_arg(n, arg) for arg in line[1:]]
   try:
-    args = map(lambda (n, arg): arg.zfill(bas[n]), enumerate(parsed_args))
+    args= [arg.zfill(bas[n]) for (n, arg) in enumerate(parsed_args)]
   except IndexError, e:
     error(n, "too many arguments: '%s' requires %d but provided with %d" % (
       instr,
@@ -131,7 +136,6 @@ def parse_line((n, line)):
     return ''
 
   return (util.fixedbin(opcode, 5) + ''.join(args)).ljust(16, '0')
-
 
 # $var_name => expands variable
 # #123 => 1111011
