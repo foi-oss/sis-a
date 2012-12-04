@@ -6,6 +6,10 @@ def chr2binstr(char):
 def binstr2int(bs):
   return int('0b' + bs, 2) if len(bs) >= 2 else 0
 
+# fixedbin(1, 5) => "00001"
+def fixedbin(n, f):
+  return bin(n)[2:].zfill(f)
+
 # partition_list([1,2,3,4,5,6,7,8,9], [3, 3, 3]) => [[1,2,3], [4,5,6], [7,8,9]]
 def partition(xs, partitions):
   r = []
