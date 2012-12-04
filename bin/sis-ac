@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+import sys
+from optparse import OptionParser
+
+from sisa import debug, compiler
+
+if __name__ == '__main__':
+  parser = OptionParser()
+  parser.add_option('-s', '--source', dest='source',
+                                      help='source file',
+                                      metavar='SOURCE')
+  parser.add_option('-o', '--output', dest='output',
+                                      help='output file',
+                                      metavar='OUT',
+                                      default='a.out')
+  parser.add_option('-d', '--debug', dest='debug',
+                                     help='enable debugging output',
+                                     metavar='DEBUG',
+                                     action='store_true',
+                                     default=False)
+  options, args = parser.parse_args()
+
+  if options.source == None:
+    print(' ! Source file is missing.')
+    exit(1)
+
+  debug.DEBUG = options.debug
+  ok, err = compiler.compile(options.source, options.output)
+  if ok == False:
+    print("") if options.debug == True else None
+    print("Following errors ocurred while compiling %s:" % options.source)
+    print('\n'.join(err))
+    exit(1)
+  else:
+    exit(0)

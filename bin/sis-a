@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+
+from __future__ import print_function, with_statement
+import sys
+import os
+from optparse import OptionParser
+
+from sisa import debug, util, regs, instructions
+
+MEMF = None
+WORD = 8
+
+def run_cpu():
+  while True:
+    instr = ("01000") if regs.PC >= len(regs.MEM) else regs.MEM[regs.PC]
+    regs.PC += 1
+    decode_intruction(instr)
+    
+    if debug.DEBUG == True:
+      options = raw_input().strip()
+      if options.find('m') != -1:
+        debug_mem()
+      if options.find('f') != -1:
+        debug_sflags()
+      if options.find('q') != -1:
+        exit(1)
+
+def read_mem_file(path):
+  debug.log(" # Reading memory from '%s'" % path)
+  if not os.path.exists(str(path)):
+    print(" ! File '%s' does not exist." % path)
+    exit(1)
+
+  MEMF = open(path, 'rb')
+  n = 0
+  b = MEMF.read(WORD)
+  while b != "":
+    regs.MEM.append(''.join(map(util.chr2binstr, b)))
+    b = MEMF.read(WORD)
+  
+  debug.log(" # Done. Read %d bytes." % (len(regs.MEM)*16))
+  debug_mem()
+
+def decode_intruction(inst):
+  opcode = util.binstr2int(inst[:5])
+  r = inst[5:]
+  return instructions.exec_instr(opcode, r)
+
+def debug_mem():
+  def list3d(xs):
+    return ''.join(map(lambda x: '%3s' % x, list(xs)))
+
+  debug.log('  +  0  1  2  3  4| 5  6  7. 8  9 10 11 12 13 14 15')
+  debug.log('\n'.join(map(lambda (n, instr): "%3d%s" % (n, list3d(instr)), enumerate(regs.MEM))))
+
+def debug_sflags():
+  debug.log(" # PC=%d SP=%d FLAGS=%s" % (regs.PC, regs.SP, bin(regs.FLAGS)))
+
+if __name__ == '__main__':
+  parser = OptionParser()
+  parser.add_option('-m', '--memory', dest='mem',
+                                      help='raw memory image',
+                                      metavar='MEM')
+  parser.add_option('-d', '--debug', dest='debug',
+                                     help='enable debugging output',
+                                     metavar='DEBUG',
+                                     action='store_true',
+                                     default=False)
+  options, args = parser.parse_args()
+
+  if options.mem == None:
+    print(' ! Memory file was not specified.')
+    exit(1)
+
+  debug.DEBUG = options.debug
+  read_mem_file(options.mem)
+  run_cpu()
