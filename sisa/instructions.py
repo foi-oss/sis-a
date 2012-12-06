@@ -43,13 +43,11 @@ def exec_instr(opcode, r):
 ### SPECIAL ###
 @instruction(0b0)
 def nop(*args):
-  regs.FLAGS = regs.FLG_NONE
   pass
 
 ### MATHS ###
 @instruction(0b00001, 3, 3, 3)
 def add(rd, r1, r2):
-  regs.FLAGS = regs.FLG_NONE
   regs.REGS[rd] = regs.REGS[r1] + regs.REGS[r2]
 
 @instruction(0b00010, 3, 3, 3)
