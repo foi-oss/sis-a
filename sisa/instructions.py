@@ -50,28 +50,71 @@ def nop(*args):
 @instruction(0b00001, 3, 3, 3)
 def add(rd, r1, r2):
   regs.FLAGS = regs.FLG_NONE
-  regs.REGS[rd] = regs.REGS[r1] + regs.REGS[r2]
+  regs.REGS[rd] = regs.REGS[r1] + regs.REGS[r2]  
+  
+  if regs.REGS[rd] < 0:
+    regs.FLAGS = reg.FLAGS | regs.FLG_SIGN
+  if regs.REGS[rd] == 0:
+    regs.FLAGS = reg.FLAGS | regs.FLG_ZERO
+  if regs.REGS[rd] & 0x01FF:
+    regs.FLAGS = reg.FLAGS | regs.FLG_CARRY
+  if regs.REGS[rd] > 0x01FF:
+    regs.FLAGS = reg.FLAGS | regs.FLG_OVERFLOW	
+  #TODO osigurati da je 16 bita samo u registru!
 
 @instruction(0b00010, 3, 3, 3)
 def sub(rd, r1, r2):
+  regs.FLAGS = regs.FLG_NONE
   regs.REGS[rd] = regs.REGS[r1] - regs.REGS[r2]
+  
+  if regs.REGS[rd] < 0:
+    regs.FLAGS = reg.FLAGS | regs.FLG_SIGN
+  if regs.REGS[rd] == 0:
+    regs.FLAGS = reg.FLAGS | regs.FLG_ZERO
+  if regs.REGS[rd] & 0x01FF:
+    regs.FLAGS = reg.FLAGS | regs.FLG_CARRY
+  if regs.REGS[rd] > 0x01FF:
+    regs.FLAGS = reg.FLAGS | regs.FLG_OVERFLOW
+  #TODO osigurati da je 16 bita samo u registru!
 
 @instruction(0b00011, 3, 3, 3)
 def mul(rd, r1, r2):
+  regs.FLAGS = regs.FLG_NONE
   regs.REGS[rd] = regs.REGS[r1] * regs.REGS[r2]
+  
+  if regs.REGS[rd] < 0:
+    regs.FLAGS = reg.FLAGS | regs.FLG_SIGN
+  if regs.REGS[rd] == 0:
+    regs.FLAGS = reg.FLAGS | regs.FLG_ZERO
+  if regs.REGS[rd] & 0x01FF:
+    regs.FLAGS = reg.FLAGS | regs.FLG_CARRY
+  if regs.REGS[rd] > 0x01FF:
+    regs.FLAGS = reg.FLAGS | regs.FLG_OVERFLOW
+  #TODO osigurati da je 16 bita samo u registru!
 
 @instruction(0b00100, 3, 3, 3)
 def mod(rd, r1, r2):
+  regs.FLAGS = regs.FLG_NONE
   regs.REGS[rd] = regs.REGS[r1] % regs.REGS[r2]
+  
+  if regs.REGS[rd] == 0:
+    regs.FLAGS = reg.FLAGS | regs.FLG_ZERO
+  if regs.REGS[rd] & 0x01FF:
+    regs.FLAGS = reg.FLAGS | regs.FLG_CARRY
+  if regs.REGS[rd] > 0x01FF:
+    regs.FLAGS = reg.FLAGS | regs.FLG_OVERFLOW
+  #TODO osigurati da je 16 bita samo u registru!
 
 ### SPECIAL (pt2) ###
 @instruction(0b00101, 3)
 def jmp(rd):
+  regs.FLAGS = regs.FLG_NONE
   log(' # JMP to ' + str(regs.REGS[rd]))
   regs.PC = regs.REGS[rd]
 
 @instruction(0b00110, 8)
 def call(rd):
+  regs.FLAGS = regs.FLG_NONE
   log(" # pushing PC and FLAGS to stack ")
   regs.STACK.append(regs.PC)
   regs.SP += 1
@@ -83,6 +126,7 @@ def call(rd):
 
 @instruction(0b00111)
 def ret():
+  regs.FLAGS = regs.FLG_NONE
   log(" # restoring registers")
   [pop.__raw__(reg) for reg in range(7, -1, -1)]
   regs.FLAGS = regs.STACK.pop()
@@ -94,9 +138,11 @@ def ret():
 
 @instruction(0b01000)
 def halt():
+  regs.FLAGS = regs.FLG_NONE
   log('*** Stopping sis-a ***')
   exit(0)
 
+  #TODO add flags after this point
 @instruction(0b01001, 3, 3, 3)
 def _and(rd, rx, ry):
   regs.REGS[rd] = regs.REGS[rx] & regs.REGS[ry]
