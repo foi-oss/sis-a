@@ -113,9 +113,24 @@ def parse_line((n, line)):
   line = line.split('--', 1)[0].strip().split(' ')
   instr = line[0]
 
-  if instr[0] == ".":
+  if instr[0] == '.':
     ret = exec_compiler_instr(n, instr[1:], line[1:])
-    return "" if ret == None else ret
+    return '' if ret == None else ret
+
+  if instr[0] == '`':
+    instr = instr.strip('`')
+    debug.log(" # %d: found raw data '%s...'" % (n, instr[0:10]))
+    raw_data = map(util.chr2binstr, b64decode(instr))
+    data = []
+    for byte in raw_data:
+      try:
+        int('0b' + byte, 2)
+        data.append(byte.zfill(8))
+      except ValueError, e:
+        data.append(bin(int('0x' + byte, 16))[2:].zfill(8))
+    debug.log(" # %d: expanded data takes up %d bytes" % (n, len(data)/2))
+    #print(''.join(data))
+    return ''
 
   try:
     opcode = instructions.MNEM_DICT[instr]
@@ -138,8 +153,10 @@ def parse_line((n, line)):
   return (util.fixedbin(opcode, 5) + ''.join(args)).ljust(16, '0')
 
 # $var_name => expands variable
-# #123 => 1111011
+# $! => address of the current instruction
 # @a => 97 => 1100001
+# %fn => address of function/label 'fn'
+# 123 => 1111011
 def parse_arg(n, arg):
   sig = arg[0]
   val = arg[1:].decode('string_escape')
@@ -160,8 +177,6 @@ def parse_arg(n, arg):
       debug.log(" # label not yet defined: " + val)
       exec_compiler_instr(n, 'begin', [val])
     return ('%' + str(COMPILER_LABELS[val]['id'])).ljust(8, '%')
-  if sig == '`':
-    val = val.rstrip('`')
 
   return bin(int(arg, 10))[2:]
 

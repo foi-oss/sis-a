@@ -3,11 +3,14 @@
   .var version_minor @1
 
 -- ascii table
-  .var asterisk @*
   .var space 32        -- can't use @<space> because compiler would trim it
 
 call %main             -- creates initial stack
 halt
+
+.begin data
+`SGVyciBGbGljayE=`
+.end data
 
 -- print '*** sis-a 0.1 ***' to screen
 .begin main

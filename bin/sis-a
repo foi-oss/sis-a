@@ -48,10 +48,10 @@ def decode_intruction(inst):
 
 def debug_mem():
   def list3d(xs):
-    return ''.join(map(lambda x: '%3s' % x, list(xs)))
+    return ''.join(["%3s" % x for x in list(xs)])
 
   debug.log('  +  0  1  2  3  4| 5  6  7. 8  9 10 11 12 13 14 15')
-  debug.log('\n'.join(map(lambda (n, instr): "%3d%s" % (n, list3d(instr)), enumerate(regs.MEM))))
+  debug.log('\n'.join(["%3d%s" % (n, list3d(instr)) for (n, instr) in enumerate(regs.MEM)]))
 
 def debug_sflags():
   debug.log(" # PC=%d SP=%d FLAGS=%s" % (regs.PC, regs.SP, bin(regs.FLAGS)))
