@@ -110,7 +110,7 @@ def parse_line((n, line)):
   if len(line) == 0 or line[0:2] == '--':
     return ''
 
-  line = line.split('--', 1)[0].strip().split(' ')
+  line = line.split('--', 1)[0].strip().split()
   instr = line[0]
 
   if instr[0] == '.':
@@ -139,7 +139,7 @@ def parse_line((n, line)):
     return ''
 
   bas = instructions.INSTRUCTIONS[opcode].__bas__
-  parsed_args = [parse_arg(n, arg) for arg in line[1:]]
+  parsed_args = [parse_arg(n, arg.strip()) for arg in line[1:]]
   try:
     args= [arg.zfill(bas[n]) for (n, arg) in enumerate(parsed_args)]
   except IndexError, e:

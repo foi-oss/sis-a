@@ -14,22 +14,26 @@ halt
 
 -- print '*** sis-a 0.1 ***' to screen
 .begin main
+  call %welcome_message
+.end main
+
+.begin welcome_message
   call %display_stars
 
   loadv 0 $space
   loadv 1 @s
   loadv 2 @i
-  mv 1 3
+  mv    1 3
   loadv 4 @-
   loadv 5 @a
-  mv 0 6
+  mv    0 6
   loadv 7 @\n
   displ 0 6
 
   call %display_stars
 
-  displ 7 7            -- if push/pop work properly this should print a \n
-.end main
+  displ 7 7            -- if push/pop work properly this should print "a \n"
+.end welcome_message
 
 .begin display_stars
   loadv 0 @*
