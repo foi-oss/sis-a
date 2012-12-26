@@ -22,6 +22,8 @@ def run_cpu():
         debug_mem()
       if options.find('f') != -1:
         debug_sflags()
+      if options.find('r') != -1:
+        debug_regs()
       if options.find('q') != -1:
         exit(1)
 
@@ -35,8 +37,9 @@ def read_mem_file(path):
   n = 0
   b = MEMF.read(WORD)
   while b != "":
-    regs.MEM.append(''.join(map(util.chr2binstr, b)))
+    regs.MEM[n] = ''.join(map(util.chr2binstr, b))
     b = MEMF.read(WORD)
+    n += 1
   
   debug.log(" # Done. Read %d bytes." % (len(regs.MEM)*16))
   debug_mem()
@@ -53,8 +56,11 @@ def debug_mem():
   debug.log('  +  0  1  2  3  4| 5  6  7. 8  9 10 11 12 13 14 15')
   debug.log('\n'.join(["%3d%s" % (n, list3d(instr)) for (n, instr) in enumerate(regs.MEM)]))
 
+def debug_regs():
+  debug.log('\n'.join(["%2d: %s (%d)" % (i, util.fixedbin(v, 8), v) for i, v in enumerate(regs.REGS)]))
+
 def debug_sflags():
-  debug.log(" # PC=%d SP=%d FLAGS=%s" % (regs.PC, regs.SP, bin(regs.FLAGS)))
+  debug.log(" # PC=%d SP=%d FLAGS=%s" % (regs.PC, len(regs.STACK), bin(regs.FLAGS)))
 
 if __name__ == '__main__':
   parser = OptionParser()
