@@ -8,7 +8,7 @@ from sisa import debug, compiler
 
 if __name__ == '__main__':
   parser = OptionParser()
-  parser.add_option('-s', '--source', dest='source',
+  parser.add_option('-i', '--input', dest='source',
                                       help='source file',
                                       metavar='SOURCE')
   parser.add_option('-o', '--output', dest='output',
