@@ -1,5 +1,6 @@
 from __future__ import print_function
 from base64 import b64decode
+import itertools
 
 import debug, util, instructions
 
@@ -8,6 +9,7 @@ COMPILER_VARS   = {}
 COMPILER_LABELS = {}
 COMPILER_INSTRS = {}
 LBL_COUNTER     = 0
+ADDR_SHIFT      = 0
 
 def compiler_instr(fn):
   COMPILER_INSTRS[fn.__name__] = fn
@@ -30,25 +32,43 @@ def begin(source, lbl):
     debug.log(" # %d: registering new label '%s' with id %d" % (n, lbl, LBL_COUNTER))
     COMPILER_LABELS[lbl] = {'id': LBL_COUNTER, 'start': n, 'end': -1}
     LBL_COUNTER += 1
-    return (".%d" % (LBL_COUNTER - 1)).ljust(16, '.')
+    return [(".%d" % (LBL_COUNTER - 1)).ljust(16, '.')]
   else:
     debug.log(" # %d: updating position of label '%s'" % (n, lbl))
     COMPILER_LABELS[lbl]['start'] = n
     debug.log(" # leaving a label mark")
-    return ("." + str(COMPILER_LABELS[lbl]['id'])).ljust(16, '.')
+    return [("." + str(COMPILER_LABELS[lbl]['id'])).ljust(16, '.')]
 
 @compiler_instr
 def end(source, lbl):
+  if not lbl in COMPILER_LABELS:
+    error(source[0], ".end called for an undefined label: " + lbl)
+    return
+  n = source[0]
+  COMPILER_LABELS[lbl]['end'] = n
+
+@compiler_instr
+def endf(source, lbl):
+  if not lbl in COMPILER_LABELS:
+    error(source[0], ".endf called for an undefined label: " + lbl)
+    return
   n = source[0]
   debug.log(" # %d: inserting implicit return instruction" % n)
   COMPILER_LABELS[lbl]['end'] = n
-  return util.fixedbin(instructions.MNEM_DICT['ret'], 5).ljust(16, '0')
+  return [util.fixedbin(instructions.MNEM_DICT['ret'], 5).ljust(16, '0')]
 
 @compiler_instr
 def log(source, *args):
   print(" # %d:" % source[0], *args)
 
+@compiler_instr
+def shift(source, count):
+  global ADDR_SHIFT
+  debug.log(" # Shifting all addresses by", count)
+  ADDR_SHIFT = int(count)
+
 def compile(f, fout):
+  global ADDR_SHIFT
   parsed_source = None
 
   with open(f, 'r') as source:
@@ -57,12 +77,15 @@ def compile(f, fout):
   for label in COMPILER_LABELS:
     info = COMPILER_LABELS[label]
     if info['end'] == -1:
-      error(info['start'], "label '%s' is missing a matching .end call" % label)
+      error(info['start'], "missing a matching .end call for label: " + label)
 
   if len(COMPILER_ERRORS) != 0:
     return (False, COMPILER_ERRORS)
 
-  # 1. remove whitespace
+  # 0. flatten the list
+  parsed_source = list(itertools.chain(*parsed_source))
+
+  # 1. remove blank lines
   pps = [line for line in parsed_source if len(line) != 0]
 
   # 2. find all label markers and calculate their absolute positions
@@ -70,7 +93,7 @@ def compile(f, fout):
   for (n, line) in enumerate(pps):
     if line[0] == '.':
       label_id = line.replace('.', '')
-      abspos[label_id] = n - len(abspos.keys())
+      abspos[label_id] = ADDR_SHIFT + (n - len(abspos.keys()))
       pps[n] = None
       debug.log(" # %d: found marker for label '%s'" % (n, label_id))
 
@@ -98,6 +121,9 @@ def compile(f, fout):
     debug.log(" # Writing binary to '%s'..." % fout)
     [out.write(raw_instr(line)) for line in pps]
 
+  if ADDR_SHIFT > 0:
+    print(" Note: You're using address shifting. Binary won't be executable on its own.")
+
   return (True, None)
 
 def raw_instr(instr):
@@ -115,22 +141,28 @@ def parse_line((n, line)):
 
   if instr[0] == '.':
     ret = exec_compiler_instr(n, instr[1:], line[1:])
-    return '' if ret == None else ret
+    return [''] if ret == None else ret
 
   if instr[0] == '`':
     instr = instr.strip('`')
     debug.log(" # %d: found raw data '%s...'" % (n, instr[0:10]))
     raw_data = map(util.chr2binstr, b64decode(instr))
     data = []
+
+    line = ""
     for byte in raw_data:
+      if len(line) == 16:
+        data.append(line)
+        line = ""
+
       try:
         int('0b' + byte, 2)
-        data.append(byte.zfill(8))
+        line += byte
       except ValueError, e:
-        data.append(bin(int('0x' + byte, 16))[2:].zfill(8))
+        line += bin(int('0x' + byte, 16))[2:]
+
     debug.log(" # %d: expanded data takes up %d bytes" % (n, len(data)/2))
-    #print(''.join(data))
-    return ''
+    return data
 
   try:
     opcode = instructions.MNEM_DICT[instr]
@@ -148,9 +180,9 @@ def parse_line((n, line)):
       len(bas),
       len(parsed_args)
       ))
-    return ''
+    return ['']
 
-  return (util.fixedbin(opcode, 5) + ''.join(args)).ljust(16, '0')
+  return [(util.fixedbin(opcode, 5) + ''.join(args)).ljust(16, '0')]
 
 # $var_name => expands variable
 # $! => address of the current instruction
@@ -177,9 +209,14 @@ def parse_arg(n, arg):
       debug.log(" # label not yet defined: " + val)
       exec_compiler_instr(n, 'begin', [val])
     return ('%' + str(COMPILER_LABELS[val]['id'])).ljust(8, '%')
-
+    
   return bin(int(arg, 10))[2:]
 
 def exec_compiler_instr(line, instr, args):
   if instr in COMPILER_INSTRS:
-    return COMPILER_INSTRS[instr]((line, instr, args), *args)
+    try:
+      return COMPILER_INSTRS[instr]((line, instr, args), *args)
+    except TypeError, e:
+      error(line, ".end is missing a label name")
+  else:
+    error(line, "unknown compiler instruction: ", instr)

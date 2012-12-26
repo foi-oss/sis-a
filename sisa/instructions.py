@@ -19,7 +19,7 @@ class instruction(object):
 
     def wrapper(r):
       args = map(util.binstr2int, util.partition(r, self.args_bit_size))
-      log(" > %d %s | %s" % (self.opcode, name, ' '.join(map(str, args))))
+      log(" > %s@%d | %s" % (name, regs.PC, ' '.join(map(str, args))))
       return fn(*args)
 
     wrapper.__name__ = name
@@ -52,13 +52,13 @@ def add(rd, r1, r2):
   regs.REGS[rd] = regs.REGS[r1] + regs.REGS[r2]  
   
   if regs.REGS[rd] < 0:
-    regs.FLAGS = reg.FLAGS | regs.FLG_SIGN
+    regs.FLAGS = regs.FLAGS | regs.FLG_SIGN
   if regs.REGS[rd] == 0:
-    regs.FLAGS = reg.FLAGS | regs.FLG_ZERO
+    regs.FLAGS = regs.FLAGS | regs.FLG_ZERO
   if regs.REGS[rd] & 0x01FF:
-    regs.FLAGS = reg.FLAGS | regs.FLG_CARRY
+    regs.FLAGS = regs.FLAGS | regs.FLG_CARRY
   if regs.REGS[rd] > 0x01FF:
-    regs.FLAGS = reg.FLAGS | regs.FLG_OVERFLOW	
+    regs.FLAGS = regs.FLAGS | regs.FLG_OVERFLOW	
 
 @instruction(0b00010, 3, 3, 3)
 def sub(rd, r1, r2):
@@ -66,13 +66,13 @@ def sub(rd, r1, r2):
   regs.REGS[rd] = regs.REGS[r1] - regs.REGS[r2]
   
   if regs.REGS[rd] < 0:
-    regs.FLAGS = reg.FLAGS | regs.FLG_SIGN
+    regs.FLAGS = regs.FLAGS | regs.FLG_SIGN
   if regs.REGS[rd] == 0:
-    regs.FLAGS = reg.FLAGS | regs.FLG_ZERO
+    regs.FLAGS = regs.FLAGS | regs.FLG_ZERO
   if regs.REGS[rd] & 0x01FF:
-    regs.FLAGS = reg.FLAGS | regs.FLG_CARRY
+    regs.FLAGS = regs.FLAGS | regs.FLG_CARRY
   if regs.REGS[rd] > 0x01FF:
-    regs.FLAGS = reg.FLAGS | regs.FLG_OVERFLOW
+    regs.FLAGS = regs.FLAGS | regs.FLG_OVERFLOW
   #TODO osigurati da je 16 bita samo u registru!
 
 @instruction(0b00011, 3, 3, 3)
@@ -81,13 +81,13 @@ def mul(rd, r1, r2):
   regs.REGS[rd] = regs.REGS[r1] * regs.REGS[r2]
   
   if regs.REGS[rd] < 0:
-    regs.FLAGS = reg.FLAGS | regs.FLG_SIGN
+    regs.FLAGS = regs.FLAGS | regs.FLG_SIGN
   if regs.REGS[rd] == 0:
-    regs.FLAGS = reg.FLAGS | regs.FLG_ZERO
+    regs.FLAGS = regs.FLAGS | regs.FLG_ZERO
   if regs.REGS[rd] & 0x01FF:
-    regs.FLAGS = reg.FLAGS | regs.FLG_CARRY
+    regs.FLAGS = regs.FLAGS | regs.FLG_CARRY
   if regs.REGS[rd] > 0x01FF:
-    regs.FLAGS = reg.FLAGS | regs.FLG_OVERFLOW
+    regs.FLAGS = regs.FLAGS | regs.FLG_OVERFLOW
   #TODO osigurati da je 16 bita samo u registru!
 
 @instruction(0b00100, 3, 3, 3)
@@ -96,11 +96,11 @@ def mod(rd, r1, r2):
   regs.REGS[rd] = regs.REGS[r1] % regs.REGS[r2]
   
   if regs.REGS[rd] == 0:
-    regs.FLAGS = reg.FLAGS | regs.FLG_ZERO
+    regs.FLAGS = regs.FLAGS | regs.FLG_ZERO
   if regs.REGS[rd] & 0x01FF:
-    regs.FLAGS = reg.FLAGS | regs.FLG_CARRY
+    regs.FLAGS = regs.FLAGS | regs.FLG_CARRY
   if regs.REGS[rd] > 0x01FF:
-    regs.FLAGS = reg.FLAGS | regs.FLG_OVERFLOW
+    regs.FLAGS = regs.FLAGS | regs.FLG_OVERFLOW
   #TODO osigurati da je 16 bita samo u registru!
 
 ### SPECIAL (pt2) ###
@@ -115,9 +115,7 @@ def call(rd):
   regs.FLAGS = regs.FLG_NONE
   log(" # pushing PC and FLAGS to stack ")
   regs.STACK.append(regs.PC)
-  regs.SP += 1
   regs.STACK.append(regs.FLAGS)
-  regs.SP += 0
   [push.__raw__(reg) for reg in range(0, 8)]
   log(" # jumping to %d" % rd)
   regs.PC = rd
@@ -128,11 +126,9 @@ def ret():
   log(" # restoring registers")
   [pop.__raw__(reg) for reg in range(7, -1, -1)]
   regs.FLAGS = regs.STACK.pop()
-  regs.SP -= 1
   regs.PC = regs.STACK.pop()
-  regs.SP -= 1
-
-  log(" # PC=%d SP=%d FLAGS=%d" % (regs.PC, regs.SP, regs.FLAGS))
+  
+  log(" # PC=%d SP=%d FLAGS=%d" % (regs.PC, len(regs.STACK), regs.FLAGS))
 
 @instruction(0b01000)
 def halt():
@@ -140,7 +136,7 @@ def halt():
   log('*** Stopping sis-a ***')
   exit(0)
 
-  #TODO add flags after this point
+#TODO add flags after this point
 @instruction(0b01001, 3, 3, 3)
 def _and(rd, rx, ry):
   regs.REGS[rd] = regs.REGS[rx] & regs.REGS[ry]
@@ -203,7 +199,7 @@ def gsr(rx):
   if rx & 0b100 != 0:
     regs.REGS[4] = regs.PC
   if rx & 0b010 != 0:
-    regs.REGS[5] = regs.SP
+    regs.REGS[5] = len(regs.STACK) - 1
   if rx & 0b001 != 0:
     regs.REGS[6] = regs.FLAGS
 
@@ -211,26 +207,26 @@ def gsr(rx):
 def push(rx):
   log(" # pushing value of register %d to stack" % rx)
   regs.STACK.append(regs.REGS[rx])
-  regs.SP += 1
 
 @instruction(0b11001, 3)
 def pop(rd):
-  log(" # popping '%d' off the stack" % regs.STACK[regs.SP])
-  regs.SP -= 1
+  log(" # popping '%d' off the stack" % regs.STACK[len(regs.STACK) - 1])
   regs.REGS[rd] = regs.STACK.pop()
 
 @instruction(0b11010, 3)
 def pull(rd):
-  regs.REGS[rd] = regs.STACK[regs.SP]
+  regs.REGS[rd] = regs.STACK[regs.STACK[len(regs.STACK) - 1]]
 
 ### MEMORY ###
 @instruction(0b11011, 3, 8)
 def store(rx, md):
-  regs.MEM[md] = regs.REGS[rx]
+  val = util.fixedbin(regs.REGS[rx], 16)
+  log(" # store %s (%d) => m%s" % (val, regs.REGS[rx], md))
+  regs.MEM[md] = val
 
 @instruction(0b11100, 3, 8)
 def load(rd, mx):
-  regs.REGS[rd] = regs.MEM[mx]
+  regs.REGS[rd] = util.binstr2int(regs.MEM[mx])
 
 @instruction(0b11101, 3, 8)
 def loadv(rd, val):

@@ -1,21 +1,18 @@
 -- system info
-  .var version_major @0
-  .var version_minor @1
+.var version_major @0
+.var version_minor @1
 
 -- ascii table
-  .var space 32        -- can't use @<space> because compiler would trim it
+.var space 32        -- can't use @<space> because compiler would trim it
 
-call %main             -- creates initial stack
+call %main           -- creates initial stack
 halt
-
-.begin data
-`SGVyciBGbGljayE=`
-.end data
 
 -- print '*** sis-a 0.1 ***' to screen
 .begin main
   call %welcome_message
-.end main
+  call %data
+.endf main
 
 .begin welcome_message
   call %display_stars
@@ -32,12 +29,24 @@ halt
 
   call %display_stars
 
-  displ 7 7            -- if push/pop work properly this should print "a \n"
-.end welcome_message
+  displ 7 7
+  displ 7 7
+.endf welcome_message
+
+.begin data
+`ABEAABAQEAABAAAAAAAAABEQEAAAAAEBEQEQABERERAREBABAAAAEREBEAERERERABEAAREAAAAREBABERARABEQEBAAABAQEREQAQEAAAAAEQABEQAAAAARABAAABAAEREQEAEAAAAAEQABEQAAAAARABAAABAAEREQEAEAAAAAEQABEQAAAAARABAAABAAEREQEAEAAAAAEQABEQAAAAARABAAABAAEREQEAEAAAAREBAAAAABAREBEAAREREQABEAAREAAAAREBABAQAQAREREAEBAAAAABEQAAAAAAAREAAAERERABEQEAEAAAABERAQEQAAAAAREBEAABEBABEQAQEREREBAAEAAAAAAQAREREBEBAAABAQEQAAABEAABEQAAAAAAAREAAAEREREBEBEAAREREAERAQAQAQAAARARABERERAQARAAEBERAAERAQAQAAAAEAAQAAAAABABEBEAAREREQABEQAAAAAAAREAAAEREREREBEAAREREAERAQAQAQEBARARABERERAQARAAEBERAAERAQAQAAABAAABAAAAABABEBEAARERERABEQAAAAAAAAERAAAAAAAA==`
+.end data
 
 .begin display_stars
   loadv 0 @*
   loadv 1 @*
   loadv 2 @*
   displ 0 2
-.end display_stars
+.endf display_stars
+
+--.begin print_data_addr
+--  loadv 0 %data
+--  loadv 1 65
+--  add   2 0 1
+--  displ 2 2
+--.endf print_data_addr
