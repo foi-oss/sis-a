@@ -73,7 +73,6 @@ def sub(rd, r1, r2):
     regs.FLAGS = regs.FLAGS | regs.FLG_CARRY
   if regs.REGS[rd] > 0x01FF:
     regs.FLAGS = regs.FLAGS | regs.FLG_OVERFLOW
-  #TODO osigurati da je 16 bita samo u registru!
 
 @instruction(0b00011, 3, 3, 3)
 def mul(rd, r1, r2):
@@ -88,7 +87,6 @@ def mul(rd, r1, r2):
     regs.FLAGS = regs.FLAGS | regs.FLG_CARRY
   if regs.REGS[rd] > 0x01FF:
     regs.FLAGS = regs.FLAGS | regs.FLG_OVERFLOW
-  #TODO osigurati da je 16 bita samo u registru!
 
 @instruction(0b00100, 3, 3, 3)
 def mod(rd, r1, r2):
@@ -101,7 +99,6 @@ def mod(rd, r1, r2):
     regs.FLAGS = regs.FLAGS | regs.FLG_CARRY
   if regs.REGS[rd] > 0x01FF:
     regs.FLAGS = regs.FLAGS | regs.FLG_OVERFLOW
-  #TODO osigurati da je 16 bita samo u registru!
 
 ### SPECIAL (pt2) ###
 @instruction(0b00101, 3)
@@ -132,9 +129,7 @@ def ret():
 
 @instruction(0b01000)
 def halt():
-  regs.FLAGS = regs.FLG_NONE
-  log('*** Stopping sis-a ***')
-  exit(0)
+  raise NotImplementedError()
 
 #TODO add flags after this point
 @instruction(0b01001, 3, 3, 3)
@@ -180,18 +175,15 @@ def sgt(rd, rx, ry):
 
 @instruction(0b10011, 3, 3, 3)
 def jeq(rd, rx, ry):
-  if regs.REGS[rx] == regs.REGS[ry]:
-    regs.PC = regs.REGS[rd]
+  raise NotImplementedError()
 
 @instruction(0b10100, 3, 3, 3)
 def jlt(rd, rx, ry):
-  if regs.REGS[rx] < regs.REGS[ry]:
-    regs.PC = regs.REGS[rd]
+  raise NotImplementedError()
 
 @instruction(0b10101, 3, 3, 3)
 def jgt(rd, rx, ry):
-  if regs.REGS[rx] > regs.REGS[ry]:
-    regs.PC = regs.REGS[rd]
+  raise NotImplementedError()
 
 ### STACKS ###
 @instruction(0b10111, 3)
@@ -205,8 +197,7 @@ def gsr(rx):
 
 @instruction(0b11000, 3)
 def push(rx):
-  log(" # pushing value of register %d to stack" % rx)
-  regs.STACK.append(regs.REGS[rx])
+  raise NotImplementedError()
 
 @instruction(0b11001, 3)
 def pop(rd):

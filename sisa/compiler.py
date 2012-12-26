@@ -63,9 +63,7 @@ def log(source, *args):
 
 @compiler_instr
 def shift(source, count):
-  global ADDR_SHIFT
-  debug.log(" # Shifting all addresses by", count)
-  ADDR_SHIFT = int(count)
+  raise NotImplementedError()
 
 def compile(f, fout):
   global ADDR_SHIFT

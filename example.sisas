@@ -1,0 +1,47 @@
+-- compile with:
+--    sis-ac -i example.sisas -o example
+-- run with:
+--    sis-a -m example
+
+.var version_major 0
+.var version_minor 1
+.var print_num_arg0 255
+.var counter 254
+
+call %main
+halt
+
+.begin main
+  loadv 0 10
+  store 0 $counter            -- argument for countdown
+  call %countdown
+
+  loadv 0 @\n
+  displ 0 0
+.endf main
+
+.begin print_num
+  load 0 $print_num_arg0
+  loadv 1 48                  -- numbers start at 48
+  add 2 0 1
+  displ 2 2
+.endf print_num
+
+.begin countdown
+  load 0 $counter
+  loadv 1 1
+  loadv 2 0
+  loadv 3 %loop
+  loadv 4 @.
+  mv 4 5
+  mv 4 6
+
+  .begin loop
+    sub 0 0 1
+    store 0 $print_num_arg0   --argument for print_num
+    call %print_num
+    displ  4 6
+  .end loop
+
+  jgt 3 0 2
+.endf countdown
