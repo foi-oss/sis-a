@@ -28,7 +28,7 @@ def run_cpu():
         exit(1)
 
 def read_mem_file(path):
-  debug.log(" # Reading memory from '%s'" % path)
+  debug.log(" # Reading '%s'" % path)
   if not os.path.exists(str(path)):
     print(" ! File '%s' does not exist." % path)
     exit(1)
